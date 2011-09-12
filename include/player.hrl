@@ -1,0 +1,1 @@
+-record(player, {id, pid, socket}).
