@@ -29,7 +29,9 @@ init(?MODULE) ->
 
 handle_call({add_player, Pid, Socket}, _From, #state{players = Players} = State) ->
   Id = get_new_id(Players),
-  {reply, {id, Id}, State#state{players=[#player{pid=Pid, socket=Socket, id=Id}|Players]}};
+	NewPlayer = #player{pid=Pid, socket=Socket, id=Id},
+	update_handler:connect(NewPlayer),
+  {reply, {id, Id}, State#state{players=[NewPlayer|Players]}};
 handle_call({get_players}, _From, #state{players = Players} = State) ->
   {reply, {players, Players}, State};
 handle_call(Request, _From, State) ->

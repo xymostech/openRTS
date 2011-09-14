@@ -56,9 +56,13 @@ handle_info(_Else, StateName, State) ->
   {next_state, StateName, State}.
 
 terminate(_Reason, _StateName, State) ->
-  (State#state.module):close_tcp(State#state.socket, State#state.client_state),
-  (catch gen_tcp:close(State#state.socket)),
-  ok.
+	case State#state.socket of
+		undefined ->
+			ok;
+		_ ->
+			(State#state.module):close_tcp(State#state.socket, State#state.client_state),
+			(catch gen_tcp:close(State#state.socket))
+	end.
 
 code_change(_OldVsn, StateName, State, _Extra) ->
   {ok, StateName, State}.

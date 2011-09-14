@@ -18,6 +18,8 @@ handle_tcp_data(Data, Socket, _) ->
       step_srv:start();
     "stop" ->
       step_srv:stop();
+    "reload" ->
+      reloader:start_reload();
     _ ->
       gen_tcp:send(Socket, "Invalid command\n"),
       ok

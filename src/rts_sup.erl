@@ -42,7 +42,15 @@ init(?MODULE) ->
           2000,
           worker,
           [step_srv]
-        }
+        },
+				{
+					reloader,
+					{reloader, start_link, []},
+					temporary,
+					2000,
+					worker,
+					[reloader]
+				}
       ]
     }
   }.

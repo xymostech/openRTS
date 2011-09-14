@@ -3,11 +3,13 @@
 -behavior(gen_server).
 
 -export([start_link/0]).
--export([add_unit/3, add_command/4, get_units/0, do_update/0]).
+-export([add_unit/3, get_units/0, do_update/0]).
+-export([add_move_command/3]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include("include/unit.hrl").
+-include("include/command.hrl").
 
 -record(state, {units=[], commands=[]}).
 
@@ -17,8 +19,11 @@ start_link() ->
 add_unit(Id, Pos, Owner) ->
   gen_server:cast(?MODULE, {add_unit, #unit{id=Id, pos=Pos, owner=Owner}}).
 
-add_command(Owner, Id, Dir, Steps) ->
-  gen_server:cast(?MODULE, {add_command, #command{id=Id, dir=Dir, steps=Steps}, Owner}).
+add_move_command(Unit, Pos, Owner) ->
+  add_command(#command{id=1, command=#move_command{unit_id=Unit, pos=Pos}}, Owner).
+
+add_command(Command, Owner) ->
+  gen_server:cast(?MODULE, {add_command, Command, Owner}).
 
 get_units() ->
   gen_server:call(?MODULE, {get_units}).
@@ -44,15 +49,22 @@ handle_cast({add_unit, Unit}, #state{units = Units} = State) ->
     _ ->
       {noreply, State}
   end;
-handle_cast({add_command, Command, Owner}, #state{units = Units, commands = Commands} = State) ->
-  case lists:keyfind(Command#command.id, #unit.id, Units) of
+handle_cast({add_command, #command{id=1, command=MoveCmd} = Command, Owner}, #state{units = Units, commands = Commands} = State) ->
+	io:format("~p: Got add command.~n", [self()]),
+  case lists:keyfind(MoveCmd#move_command.unit_id, #move_command.unit_id, Units) of
     #unit{owner = Owner} ->
-      Cleaned = lists:keydelete(Command#command.id, #command.id, Commands),
+      Cleaned = lists:keydelete(MoveCmd#move_command.unit_id, #move_command.unit_id, Commands),
+			io:format("~p: Commands: ~p~n", [self(), [Command|Cleaned]]),
       {noreply, State#state{commands=[Command|Cleaned]}};
+    false ->
+      io:format("~p: Illegal command: no unit with that id~n", [self()]),
+      {noreply, State};
     _ ->
+      io:format("~p: Illegal command: not owner~n", [self()]),
       {noreply, State}
   end;
 handle_cast(_Request, State) ->
+	io:format("~p: Got invalid request: ~p~n", [self(), _Request]),
   {noreply, State}.
 
 handle_info(_Info, State) ->
@@ -69,15 +81,26 @@ do_update(Units, Commands) ->
 
 do_update(Units, [], UnitAcc, CommandAcc, Changed) ->
   {Changed, Units++UnitAcc, CommandAcc};
-do_update(Units, [#command{id=Id, dir=Dir, steps=Steps} = Command|Commands], UnitAcc, CommandAcc, Changed) ->
-  case lists:keyfind(Id, #unit.id, Units) of
+do_update(Units, [#command{id=1, command=#move_command{unit_id=UnitId, pos=EndPos}}=Command|Commands],
+          UnitAcc, CommandAcc, Changed) ->
+	io:format("Movement update~n"),
+  case lists:keyfind(UnitId, #unit.id, Units) of
     false ->
+			io:format("Didn't find unit~n"),
       do_update(Units, Commands, UnitAcc, CommandAcc, Changed);
-    #unit{pos = Pos} = Unit -> 
-      NewUnit = Unit#unit{pos=pos:add(Pos,Dir)},
-      do_update(lists:keydelete(Id, #unit.id, Units),
+    #unit{pos = Pos} = Unit ->
+      MoveVect = pos:add(EndPos, pos:mult(Pos, -1)),
+      MoveLen = pos:length(MoveVect),
+      {NewUnit, NewCommands} = if
+        MoveLen < 2 ->
+					io:format("Finished moving~n"),
+          {Unit#unit{pos = EndPos}, CommandAcc};
+        true ->
+					{Unit#unit{pos = pos:add(Pos, pos:mult(pos:unit(MoveVect), 2))}, [Command|CommandAcc]}
+      end,
+      do_update(lists:keydelete(UnitId, #unit.id, Units),
                 Commands,
                 [NewUnit|UnitAcc],
-                if Steps > 1 -> [Command#command{steps=Steps-1}|CommandAcc]; true -> CommandAcc end,
+                NewCommands,
                 [NewUnit|Changed])
   end.

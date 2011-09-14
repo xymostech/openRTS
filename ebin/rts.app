@@ -2,10 +2,21 @@
   [{description, "Open-source RTS game server"},
    {vsn, "0.0.1"},
    {modules, [rts, rts_sup,
-              player_sup, player_acceptor, player_client]},
+              tcp_srv, tcp_sup, tcp_client, tcp_acceptor,
+              telnet_client,
+              player_client, player_register, player_commands,
+              step_srv,
+              update_handler,
+              unit_srv,
+              pos,
+							reloader]},
    {registered, [rts_sup,
-                 player_sup, player_client_sup, player_acceptor]},
+                 player_register,
+                 step_srv,
+                 unit_srv,
+								 reloader]},
    {applications, [kernel, stdlib]},
    {mod, {rts, []}},
    {env, []}
-  ]}.
+  ]
+}.

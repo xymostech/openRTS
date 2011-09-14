@@ -39,12 +39,13 @@ init(?MODULE) ->
   }.
 
 init_tcp(Socket) ->
-  {ok, Id} = player_register:add_player(self(), Socket),
+  {id, Id} = player_register:add_player(self(), Socket),
   {ok, #state{id=Id}}.
 
 handle_tcp_data(Data, _Socket, State) ->
+	player_commands:handle_command(Data, State#state.id),
   {ok, State}.
 
-close_tcp(_Socket, #state{id=Id}=_State) ->
-  player_register:rem_player(Id),
+close_tcp(_Socket, State) ->
+  player_register:rem_player(State#state.id),
   ok.
