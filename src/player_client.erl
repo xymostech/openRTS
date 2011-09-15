@@ -1,3 +1,29 @@
+%%%--------------------------------------------------
+%%% module player_client
+%%%--------------------------------------------------
+%%% Supervisor module for handling player connections
+%%%--------------------------------------------------
+%%% Exports
+%%%--------------------------------------------------
+%%% init_tcp(Socket)
+%%%   initializes the connector state, and registers
+%%%   with the player register
+%%%
+%%% handle_tcp_data(Data, Socket, State)
+%%%   handles data received from player
+%%%   passes to player_command for interpretation
+%%%
+%%% close_tcp(Socket, State)
+%%%   handles closing of socket
+%%%   removes player from player register
+%%%
+%%% start_link
+%%%   starts the supervisor
+%%%
+%%% init(Module)
+%%%   callback for supervisor:start_link
+%%%--------------------------------------------------
+
 -module(player_client).
 
 -behaviour(tcp_srv).
