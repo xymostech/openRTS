@@ -78,6 +78,15 @@ init(?MODULE) ->
           2000,
           worker,
           [reloader]
+        },
+        % unit info worker
+        {
+          unit_srv,
+          {info_srv, start_link, []},
+          temporary,
+          2000,
+          worker,
+          [unit_srv]
         }
       ]
     }

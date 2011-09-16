@@ -3,12 +3,13 @@
 -behavior(gen_server).
 
 -export([start_link/0]).
--export([add_unit/3, get_units/0, do_update/0]).
+-export([add_unit/4, get_units/0, do_update/0]).
 -export([add_move_command/3]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 -include("include/unit.hrl").
+-include("include/unit_data.hrl").
 -include("include/command.hrl").
 
 -record(state, {units=[], commands=[]}).
@@ -16,8 +17,8 @@
 start_link() ->
   gen_server:start_link({local, ?MODULE}, ?MODULE, ?MODULE, []).
 
-add_unit(Id, Pos, Owner) ->
-  gen_server:cast(?MODULE, {add_unit, #unit{id=Id, pos=Pos, owner=Owner}}).
+add_unit(Id, Type, Pos, Owner) ->
+  gen_server:cast(?MODULE, {add_unit, #unit{id=Id, type_id=Type, pos=Pos, owner=Owner}}).
 
 add_move_command(Unit, Pos, Owner) ->
   add_command(#command{id=1, command=#move_command{unit_id=Unit, pos=Pos}}, Owner).
@@ -91,12 +92,13 @@ do_update(Units, [#command{id=1, command=#move_command{unit_id=UnitId, pos=EndPo
     #unit{pos = Pos} = Unit ->
       MoveVect = pos:add(EndPos, pos:mult(Pos, -1)),
       MoveLen = pos:length(MoveVect),
+      {data, #u_data{speed = Speed}} = info_srv:get_data(Unit#unit.type_id),
       {NewUnit, NewCommands} = if
-        MoveLen < 2 ->
+        MoveLen < Speed ->
 					io:format("Finished moving~n"),
           {Unit#unit{pos = EndPos}, CommandAcc};
         true ->
-					{Unit#unit{pos = pos:add(Pos, pos:mult(pos:unit(MoveVect), 2))}, [Command|CommandAcc]}
+					{Unit#unit{pos = pos:add(Pos, pos:mult(pos:unit(MoveVect), Speed))}, [Command|CommandAcc]}
       end,
       do_update(lists:keydelete(UnitId, #unit.id, Units),
                 Commands,
