@@ -21,6 +21,10 @@
 
 -module(rts_sup).
 
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([start_link/0, stop/0]).
 -export([init/1]).
 
@@ -95,3 +99,14 @@ init(?MODULE) ->
 %% stops the supervisor
 stop() ->
   ok.
+
+
+-ifdef(EUNIT).
+rt_sup_start_test() ->
+  start_link().
+
+rts_stop_test_() ->
+  {setup, fun() -> start_link() end,
+          fun(_) -> ok end,
+          fun(_) -> [fun() -> stop() end] end}.
+-endif.
