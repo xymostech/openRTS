@@ -81,12 +81,12 @@ init(?MODULE) ->
         },
         % unit info worker
         {
-          unit_srv,
+          info_srv,
           {info_srv, start_link, []},
           temporary,
           2000,
           worker,
-          [unit_srv]
+          [info_srv]
         }
       ]
     }
