@@ -18,6 +18,10 @@
 
 -behavior(application).
 
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([start/2, stop/1]).
 
 %% starts the application
@@ -27,3 +31,13 @@ start(_StartType, _StartArgs) ->
 %% stops the application
 stop(_State) ->
   rts_sup:stop().
+
+-ifdef(EUNIT).
+rts_start_test() ->
+  start([],[]).
+
+rts_stop_test_() ->
+  {setup, fun() -> rts:start(normal,[]) end,
+          fun(_) -> ok end,
+          fun(_) -> [fun() -> rts:stop([]) end] end}.
+-endif.
