@@ -51,11 +51,11 @@ handle_cast({add_unit, Unit}, #state{units = Units} = State) ->
       {noreply, State}
   end;
 handle_cast({add_command, #command{id=1, command=MoveCmd} = Command, Owner}, #state{units = Units, commands = Commands} = State) ->
-	io:format("~p: Got add command.~n", [self()]),
+  io:format("~p: Got add command.~n", [self()]),
   case lists:keyfind(MoveCmd#move_command.unit_id, #move_command.unit_id, Units) of
     #unit{owner = Owner} ->
       Cleaned = lists:keydelete(MoveCmd#move_command.unit_id, #move_command.unit_id, Commands),
-			io:format("~p: Commands: ~p~n", [self(), [Command|Cleaned]]),
+      io:format("~p: Commands: ~p~n", [self(), [Command|Cleaned]]),
       {noreply, State#state{commands=[Command|Cleaned]}};
     false ->
       io:format("~p: Illegal command: no unit with that id~n", [self()]),
@@ -65,7 +65,7 @@ handle_cast({add_command, #command{id=1, command=MoveCmd} = Command, Owner}, #st
       {noreply, State}
   end;
 handle_cast(_Request, State) ->
-	io:format("~p: Got invalid request: ~p~n", [self(), _Request]),
+  io:format("~p: Got invalid request: ~p~n", [self(), _Request]),
   {noreply, State}.
 
 handle_info(_Info, State) ->
@@ -84,25 +84,27 @@ do_update(Units, [], UnitAcc, CommandAcc, Changed) ->
   {Changed, Units++UnitAcc, CommandAcc};
 do_update(Units, [#command{id=1, command=#move_command{unit_id=UnitId, pos=EndPos}}=Command|Commands],
           UnitAcc, CommandAcc, Changed) ->
-	io:format("Movement update~n"),
+  {NewUnits, NewChanged, NewCommands} = move_update(Units, Changed, CommandAcc, Command),
+  do_update(NewUnits,
+            Commands,
+            UnitAcc,
+            NewCommands,
+            NewChanged).
+
+move_update(Units, Changed, CommandAcc, #command{command=#move_command{unit_id=UnitId, pos=EndPos}} = Command) ->
   case lists:keyfind(UnitId, #unit.id, Units) of
     false ->
-			io:format("Didn't find unit~n"),
-      do_update(Units, Commands, UnitAcc, CommandAcc, Changed);
-    #unit{pos = Pos} = Unit ->
+      {Units, Changed, CommandAcc};
+    #unit{pos=Pos, type_id=Type} = Unit ->
+      FilteredUnits = lists:keydelete(UnitId, #unit.id, Units),
       MoveVect = pos:add(EndPos, pos:mult(Pos, -1)),
-      MoveLen = pos:length(MoveVect),
-      {data, #u_data{speed = Speed}} = info_srv:get_data(Unit#unit.type_id),
-      {NewUnit, NewCommands} = if
+      MoveLen  = pos:length(MoveVect),
+      {data, #u_data{speed=Speed}} = info_srv:get_data(Type),
+      {NewUnit, CommandAcc} = if
         MoveLen < Speed ->
-					io:format("Finished moving~n"),
-          {Unit#unit{pos = EndPos}, CommandAcc};
+          {Unit#unit{pos=EndPos}, CommandAcc};
         true ->
-					{Unit#unit{pos = pos:add(Pos, pos:mult(pos:unit(MoveVect), Speed))}, [Command|CommandAcc]}
+          {Unit#unit{pos = pos:add(Pos, pos:mult(pos:unit(MoveVect), Speed))}, [Command|CommandAcc]}
       end,
-      do_update(lists:keydelete(UnitId, #unit.id, Units),
-                Commands,
-                [NewUnit|UnitAcc],
-                NewCommands,
-                [NewUnit|Changed])
+      {[NewUnit|FilteredUnits], [NewUnit|Changed], CommandAcc}
   end.
