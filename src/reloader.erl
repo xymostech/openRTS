@@ -2,6 +2,10 @@
 
 -behaviour (gen_server).
 
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
 -export([start_link/0]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
@@ -48,3 +52,15 @@ load_code([Module|Modules]) ->
   code:purge(Module),
   code:load_file(Module),
   load_code(Modules).
+
+-ifdef(EUNIT).
+start_test() ->
+	start_link().
+
+reload_test_() ->
+	{setup,
+		fun() -> application:start_link(rts) end,
+		fun(_) -> application:stop(rts) end,
+		fun(_) ->
+				[fun() -> start_reload() end] end}.
+-endif.

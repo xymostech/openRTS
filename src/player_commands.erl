@@ -1,8 +1,11 @@
 -module(player_commands).
 
--export([handle_command/2]).
-
 -include("include/unit.hrl").
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
+-export([handle_command/2]).
 
 split_commands(Command) ->
   split_commands(Command, [], []).
@@ -31,3 +34,10 @@ handle_command(Command, Id) ->
 add_move(Args, Id) ->
   [UnitId, PosX, PosY|_] = Args,
   unit_srv:add_move_command(UnitId, #pos{x=PosX, y=PosY}, Id).
+
+-ifdef(EUNIT).
+split_test_() ->
+	[?_test([[]] = split_commands([])),
+	 ?_test(["a", "b", "c"] = split_commands("a b c")),
+	 ?_test(["ab", "cd"] = split_commands("a\r\nb c\r\nd\r\n"))].
+-endif.
