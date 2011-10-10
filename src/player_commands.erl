@@ -7,6 +7,8 @@
 
 -export([handle_command/2]).
 
+split_commands([]) ->
+  [];
 split_commands(Command) ->
 	split_commands(Command, [], []).
 
@@ -43,7 +45,7 @@ add_spawn(Args, Id) ->
 
 -ifdef(EUNIT).
 split_test_() ->
-	[?_test([[]] = split_commands([])),
-	 ?_test(["a", "b", "c"] = split_commands("a b c")),
-	 ?_test(["ab", "cd"] = split_commands("a\r\nb c\r\nd\r\n"))].
+	[?_test([] = split_commands([])),
+	 ?_test([1, 2, 3] = split_commands("1 2 3")),
+	 ?_test([12, 23] = split_commands("1\r\n2 2\r\n3\r\n"))].
 -endif.
