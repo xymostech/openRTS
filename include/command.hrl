@@ -3,8 +3,9 @@
 
 -include("include/pos.hrl").
 
--record(move_command, {unit_id, pos}).
+-record(move_command, {pos}).
+-record(spawn_command, {spawn_type, turns}).
 
--record(command, {id, command}).
+-record(command, {id, unit_id, command}).
 
 -endif.

@@ -17,14 +17,15 @@ get_data(Id) ->
   gen_server:call(?MODULE, {get_data, Id}).
 
 init(?MODULE) ->
-  {ok, #state{data = [#u_data{id=1, speed = 2}]}}.
+  {ok, #state{data = [#u_data{id=1, speed = 2},
+                      #u_data{id=2, spawns=[#spawn{id=1, turns=2}]}]}}.
 
 handle_call({get_data, UnitId}, _From, #state{data = Data} = State) ->
   case lists:keyfind(UnitId, #u_data.id, Data) of
     false ->
       {reply, {no_unit}, State};
-    Data ->
-      {reply, {data, Data}, State}
+    UData ->
+      {reply, {data, UData}, State}
   end;
 handle_call(Request, _From, State) ->
   {reply, {invalid_request, Request}, {invalid_request, Request}, State}.

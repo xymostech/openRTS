@@ -27,6 +27,8 @@ handle_command(Command, Id) ->
   case First of
     1 ->
       add_move(Rest, Id);
+    2 ->
+      add_spawn(Rest, Id);
     _ ->
       ok
   end.
@@ -34,6 +36,10 @@ handle_command(Command, Id) ->
 add_move(Args, Id) ->
   [UnitId, PosX, PosY|_] = Args,
   unit_srv:add_move_command(UnitId, #pos{x=PosX, y=PosY}, Id).
+
+add_spawn(Args, Id) ->
+  [UnitId, NewUnitId|_] = Args,
+  unit_srv:add_spawn_command(UnitId, NewUnitId, Id).
 
 -ifdef(EUNIT).
 split_test_() ->
