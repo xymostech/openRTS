@@ -3,6 +3,6 @@
 
 -include("include/pos.hrl").
 
--record(unit, {id, type_id, pos=#pos{}, owner}).
+-record(unit, {id, type_id, pos=#pos{}, health=0, owner}).
 
 -endif.

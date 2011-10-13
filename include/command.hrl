@@ -5,6 +5,7 @@
 
 -record(move_command, {pos}).
 -record(spawn_command, {spawn_type, turns}).
+-record(attack_command, {att_id}).
 
 -record(command, {id, unit_id, command}).
 

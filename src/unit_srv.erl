@@ -23,8 +23,11 @@ add_unit(Type, Pos, Owner) ->
 add_move_command(Unit, Pos, Owner) ->
 	add_command(#command{id=move, unit_id=Unit, command=#move_command{pos=Pos}}, Owner).
 
-add_spawn_command(Unit, NewUnit, Owner) ->
-	add_command(#command{id=spawn, unit_id=Unit, command=#spawn_command{spawn_type=NewUnit}}, Owner).
+add_spawn_command(Unit, NewUnitType, Owner) ->
+	add_command(#command{id=spawn, unit_id=Unit, command=#spawn_command{spawn_type=NewUnitType}}, Owner).
+
+add_attack_command(Unit, AttackUnit, Owner) ->
+	add_command(#command{id=attack, unit_id=Unit, command=#attack_command{att_id=AttackUnit}}, Owner).
 
 add_command(Command, Owner) ->
 	gen_server:cast(?MODULE, {add_command, Command, Owner}).
