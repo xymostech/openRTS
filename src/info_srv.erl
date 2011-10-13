@@ -11,34 +11,34 @@
 -record(state, {data = []}).
 
 start_link() ->
-  gen_server:start_link({local, ?MODULE}, ?MODULE, ?MODULE, []).
+	gen_server:start_link({local, ?MODULE}, ?MODULE, ?MODULE, []).
 
 get_data(Id) ->
-  gen_server:call(?MODULE, {get_data, Id}).
+	gen_server:call(?MODULE, {get_data, Id}).
 
 init(?MODULE) ->
-  {ok, #state{data = [#u_data{id=1, speed = 2},
-                      #u_data{id=2, spawns=[#spawn{id=1, turns=2}]}]}}.
+	{ok, #state{data = [#u_data{id=1, speed = 2},
+              		    #u_data{id=2, spawns=[#spawn{id=1, turns=2}]}]}}.
 
 handle_call({get_data, UnitId}, _From, #state{data = Data} = State) ->
-  case lists:keyfind(UnitId, #u_data.id, Data) of
-    false ->
-      {reply, {no_unit}, State};
-    UData ->
-      {reply, {data, UData}, State}
-  end;
+	case lists:keyfind(UnitId, #u_data.id, Data) of
+		false ->
+			{reply, {no_unit}, State};
+		UData ->
+			{reply, {data, UData}, State}
+	end;
 handle_call(Request, _From, State) ->
-  {reply, {invalid_request, Request}, {invalid_request, Request}, State}.
+	{reply, {invalid_request, Request}, {invalid_request, Request}, State}.
 
 handle_cast(_Request, State) ->
-  {noreply, State}.
+	{noreply, State}.
 
 handle_info(_Info, State) ->
-  {noreply, State}.
+	{noreply, State}.
 
 terminate(_Reason, _State) ->
-  ok.
+	ok.
 
 code_change(_Vsn, State, _Other) ->
-  {ok, State}.
+	{ok, State}.
 

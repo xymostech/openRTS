@@ -13,48 +13,48 @@
 -record(state, {players=[]}).
 
 start_link() ->
-  gen_server:start_link({local, ?MODULE}, ?MODULE, ?MODULE, []).
+	gen_server:start_link({local, ?MODULE}, ?MODULE, ?MODULE, []).
 
 add_player(Pid, Socket) ->
-  gen_server:call(?MODULE, {add_player, Pid, Socket}).
+	gen_server:call(?MODULE, {add_player, Pid, Socket}).
 
 rem_player(Pid) ->
-  gen_server:cast(?MODULE, {rem_player, Pid}).
+	gen_server:cast(?MODULE, {rem_player, Pid}).
 
 get_players() ->
-  gen_server:call(?MODULE, {get_players}).
+	gen_server:call(?MODULE, {get_players}).
 
 init(?MODULE) ->
-  {ok, #state{}}.
+	{ok, #state{}}.
 
 handle_call({add_player, Pid, Socket}, _From, #state{players = Players} = State) ->
-  Id = get_new_id(Players),
+	Id = get_new_id(Players),
 	NewPlayer = #player{pid=Pid, socket=Socket, id=Id},
 	update_handler:connect(NewPlayer),
-  {reply, {id, Id}, State#state{players=[NewPlayer|Players]}};
+	{reply, {id, Id}, State#state{players=[NewPlayer|Players]}};
 handle_call({get_players}, _From, #state{players = Players} = State) ->
-  {reply, {players, Players}, State};
+	{reply, {players, Players}, State};
 handle_call(Request, _From, State) ->
-  {stop, {invalid_request, Request}, {invalid_request, Request}, State}.
+	{stop, {invalid_request, Request}, {invalid_request, Request}, State}.
 
 handle_cast({rem_player, Id}, #state{players = Players} = State) ->
-  {noreply, State#state{players=lists:keydelete(Id, #player.id, Players)}};
+	{noreply, State#state{players=lists:keydelete(Id, #player.id, Players)}};
 handle_cast(_Request, State) ->
-  {noreply, State}.
+	{noreply, State}.
 
 handle_info(_Info, State) ->
-  {noreply, State}.
+	{noreply, State}.
 
 terminate(_Reason, _State) ->
-  ok.
+	ok.
 
 code_change(_Old, State, _Other) ->
-  {ok, State}.
+	{ok, State}.
 
 get_new_id(Players) ->
-  get_new_id(Players, 1).
+	get_new_id(Players, 1).
 
 get_new_id([], Max) ->
-  Max;
+	Max;
 get_new_id([#player{id=Id}|Players], Max) ->
-  get_new_id(Players, if Id > Max -> Id + 1; true -> Max end).
+	get_new_id(Players, if Id > Max -> Id + 1; true -> Max end).

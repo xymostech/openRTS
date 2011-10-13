@@ -30,83 +30,83 @@
 
 %% starts the supervisor thread
 start_link() ->
-  supervisor:start_link({local, ?MODULE}, ?MODULE, ?MODULE).
+	supervisor:start_link({local, ?MODULE}, ?MODULE, ?MODULE).
 
 %% supervisor callback to find out which supervisors and workers to create
 init(?MODULE) ->
-  {ok,
-    {
-      {one_for_one, 10, 60},
-      [
-        % player connection supervisor
-        {
-          player_sup,
-          {player_client, start_link, []},
-          permanent,
-          infinity,
-          supervisor,
-          [player_client]
-        },
-        % telnet connection supervisor
-        {
-          telnet_sup,
-          {telnet_client, start_link, []},
-          permanent,
-          infinity,
-          supervisor,
-          [telnet_client]
-        },
-        % unit server worker
-        {
-          unit_srv,
-          {unit_srv, start_link, []},
-          temporary,
-          2000,
-          worker,
-          [unit_srv]
-        },
-        % step server worker
-        {
-          step_srv,
-          {step_srv, start_link, []},
-          temporary,
-          2000,
-          worker,
-          [step_srv]
-        },
-        % reloader worker
-        {
-          reloader,
-          {reloader, start_link, []},
-          temporary,
-          2000,
-          worker,
-          [reloader]
-        },
-        % unit info worker
-        {
-          info_srv,
-          {info_srv, start_link, []},
-          temporary,
-          2000,
-          worker,
-          [info_srv]
-        }
-      ]
-    }
-  }.
+	{ok,
+		{
+			{one_for_one, 10, 60},
+			[
+				% player connection supervisor
+				{
+					player_sup,
+					{player_client, start_link, []},
+					permanent,
+					infinity,
+					supervisor,
+					[player_client]
+				},
+				% telnet connection supervisor
+				{
+					telnet_sup,
+					{telnet_client, start_link, []},
+					permanent,
+					infinity,
+					supervisor,
+					[telnet_client]
+				},
+				% unit server worker
+				{
+					unit_srv,
+					{unit_srv, start_link, []},
+					temporary,
+					2000,
+					worker,
+					[unit_srv]
+				},
+				% step server worker
+				{
+					step_srv,
+					{step_srv, start_link, []},
+					temporary,
+					2000,
+					worker,
+					[step_srv]
+				},
+				% reloader worker
+				{
+					reloader,
+					{reloader, start_link, []},
+					temporary,
+					2000,
+					worker,
+					[reloader]
+				},
+				% unit info worker
+				{
+					info_srv,
+					{info_srv, start_link, []},
+					temporary,
+					2000,
+					worker,
+					[info_srv]
+				}
+			]
+		}
+	}.
 
 %% stops the supervisor
 stop() ->
-  ok.
+	ok.
 
 
 -ifdef(EUNIT).
 rt_sup_start_test() ->
-  start_link().
+	start_link().
 
 rts_stop_test_() ->
-  {setup, fun() -> start_link() end,
-          fun(_) -> ok end,
-          fun(_) -> [fun() -> stop() end] end}.
+	{setup, fun() -> start_link() end,
+	        fun(_) -> ok end,
+	        fun(_) -> [fun() -> stop() end] end}.
 -endif.

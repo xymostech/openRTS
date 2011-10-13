@@ -26,18 +26,18 @@
 
 %% starts the application
 start(_StartType, _StartArgs) ->
-  rts_sup:start_link().
+	rts_sup:start_link().
 
 %% stops the application
 stop(_State) ->
-  rts_sup:stop().
+	rts_sup:stop().
 
 -ifdef(EUNIT).
 rts_start_test() ->
-  start([],[]).
+	start([],[]).
 
 rts_stop_test_() ->
-  {setup, fun() -> rts:start(normal,[]) end,
-          fun(_) -> ok end,
-          fun(_) -> [fun() -> rts:stop([]) end] end}.
+	{setup, fun() -> rts:start(normal,[]) end,
+      	        fun(_) -> ok end,
+      	        fun(_) -> [fun() -> rts:stop([]) end] end}.
 -endif.
