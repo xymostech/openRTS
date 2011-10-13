@@ -58,7 +58,7 @@ start_test() ->
 
 reload_test_() ->
 	{setup,
-		fun() -> application:start_link(rts) end,
+		fun() -> application:start(rts) end,
 		fun(_) -> application:stop(rts) end,
 		fun(_) ->
 			[fun() -> start_reload() end] end}.
