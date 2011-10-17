@@ -206,4 +206,12 @@ attack_update(Units, #command{command=#attack_command{turns=Turns} = AttackCmd} 
 -ifdef(EUNIT).
 start_test() ->
 	start_link().
+
+get_new_id_test_() ->
+	[?_assert(get_new_id([]) == 1),
+	 ?_assert(get_new_id([#unit{id=1}]) == 2),
+	 ?_assert(get_new_id([#unit{id=3},
+	                      #unit{id=1}]) == 4),
+	 ?_assert(get_new_id([#unit{id=1},
+	                      #unit{id=3}]) == 4)].
 -endif.
