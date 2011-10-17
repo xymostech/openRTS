@@ -56,10 +56,10 @@ load_code([Module|Modules]) ->
 start_test() ->
 	start_link().
 
-reload_test_() ->
-	{setup,
-		fun() -> application:start(rts) end,
-		fun(_) -> application:stop(rts) end,
-		fun(_) ->
-			[fun() -> start_reload() end] end}.
+%reload_test_() ->
+	%{setup,
+		%fun() -> application:start(rts) end,
+		%fun(_) -> application:stop(rts) end,
+		%fun(_) ->
+			%[fun() -> start_reload() end] end}.
 -endif.
