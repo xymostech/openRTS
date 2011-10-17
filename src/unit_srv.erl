@@ -4,9 +4,11 @@
 
 -export([start_link/0]).
 -export([add_unit/3, get_units/0, do_update/0]).
--export([add_move_command/3, add_spawn_command/3]).
+-export([add_move_command/3, add_spawn_command/3, add_attack_command/3]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
+
+-compile(export_all).
 
 -include("include/unit.hrl").
 -include("include/unit_data.hrl").
@@ -107,6 +109,14 @@ validate(#command{id=spawn, unit_id=Id, command=SpawnCmd} = Command, Units) ->
 					io:format("~p: Can spawn in ~p Turns~n", [self(), Turns]),
 					{ok, Command#command{command=SpawnCmd#spawn_command{turns = Turns}}}
 			end
+	end;
+validate(#command{id=attack, unit_id=Id, command=AttackCmd} = Command, Units) ->
+	case lists:keyfind(Id, #unit.id, Units) of
+		false ->
+			{bad, Command};
+		#unit{type_id = Type} ->
+			#u_data{attack=#attack{turns=Turns}} = data_srv:get_unit(Type),
+			{ok, Command#command{command=AttackCmd#attack_command{turns=Turns}}}
 	end.
 
 handle_info(_Info, State) ->
@@ -128,7 +138,9 @@ do_update(Units, [#command{id=CmdId}=Command|Commands], CommandAcc, Changed) ->
 		move ->
 			move_update(Units, Command, CommandAcc, Changed);
 		spawn ->
-			spawn_update(Units, Command, CommandAcc, Changed)
+			spawn_update(Units, Command, CommandAcc, Changed);
+		attack ->
+			attack_update(Units, Command, CommandAcc, Changed)
 	end,
 	do_update(NewUnits, Commands, NewCommands, NewChanged).
 
@@ -138,11 +150,13 @@ move_update(Units, #command{unit_id=UnitId, command=#move_command{pos=EndPos}} =
 			{Units, Changed, CommandAcc};
 		Unit ->
 			FilteredUnits = lists:keydelete(UnitId, #unit.id, Units),
-			{NewUnit, NewCommandAcc} = case find_new_pos(Unit, EndPos) of
-				{done, NewPos} ->
-					{Unit#unit{pos=NewPos}, CommandAcc};
+			{Done, NewPos} = find_new_pos(Unit, EndPos),
+			NewUnit = Unit#unit{pos=NewPos},
+			NewCommandAcc = case Done of
+				done ->
+					CommandAcc;
 				{next, NewPos} ->
-					{Unit#unit{pos=NewPos}, [Command|CommandAcc]}
+					[Command|CommandAcc]
 			end,
 			{[NewUnit|FilteredUnits], NewCommandAcc, [NewUnit|Changed]}
 	end.
@@ -170,3 +184,19 @@ spawn_update(Units, #command{unit_id=Id, command=#spawn_command{spawn_type=Type,
 	end;
 spawn_update(Units, #command{command=#spawn_command{turns=Turns}=SpawnCmd}=Command, CommandAcc, Changed) ->
 	{Units, [Command#command{command = SpawnCmd#spawn_command{turns = Turns-1}}|CommandAcc], Changed}.
+
+attack_update(Units, #command{unit_id=Id, command=#attack_command{att_id=AttackId, turns=0}}, CommandAcc, Changed) ->
+	try
+		#unit{type_id=UnitType, pos=UnitPos} = lists:keyfind(Id, #unit.id, Units),
+		AttackUnit = #unit{pos=AttackUnitPos, health=Health} = lists:keyfind(AttackId, #unit.id, Units),
+		#u_data{attack=#attack{range=Range, damage=Damage}} = info_srv:get_info(UnitType),
+		true = pos:length(pos:add(pos:mult(UnitPos, -1), AttackUnitPos)) < Range,
+		Filtered = lists:keydelete(AttackId, #unit.id, Units),
+		NewAttackUnit = AttackUnit#unit{health=Health+Damage},
+		{[NewAttackUnit|Filtered], CommandAcc, [NewAttackUnit|Changed]}
+	catch
+		error:{badmatch, _} ->
+			{Units, Changed, CommandAcc}
+	end;
+attack_update(Units, #command{command=#attack_command{turns=Turns} = AttackCmd} = Command, CommandAcc, Changed) ->
+	{Units, [Command#command{command = AttackCmd#attack_command{turns=Turns-1}}|CommandAcc], Changed}.
