@@ -2,17 +2,19 @@
 
 -behavior(gen_server).
 
--export([start_link/0]).
--export([add_unit/3, get_units/0, do_update/0]).
--export([add_move_command/3, add_spawn_command/3, add_attack_command/3]).
-
--export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
-
--compile(export_all).
-
 -include("include/unit.hrl").
 -include("include/unit_data.hrl").
 -include("include/command.hrl").
+
+-ifdef(EUNIT).
+-include_lib("eunit/include/eunit.hrl").
+-endif.
+
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
+
+-export([start_link/0]).
+-export([add_unit/3, get_units/0, do_update/0]).
+-export([add_move_command/3, add_spawn_command/3, add_attack_command/3]).
 
 -record(state, {units=[], commands=[]}).
 
@@ -200,3 +202,8 @@ attack_update(Units, #command{unit_id=Id, command=#attack_command{att_id=AttackI
 	end;
 attack_update(Units, #command{command=#attack_command{turns=Turns} = AttackCmd} = Command, CommandAcc, Changed) ->
 	{Units, [Command#command{command = AttackCmd#attack_command{turns=Turns-1}}|CommandAcc], Changed}.
+
+-ifdef(EUNIT).
+start_test() ->
+	start_link().
+-endif.
