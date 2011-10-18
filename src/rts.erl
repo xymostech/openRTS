@@ -33,11 +33,11 @@ stop(_State) ->
 	rts_sup:stop().
 
 -ifdef(EUNIT).
-rts_start_test() ->
-	start([],[]).
+%rts_start_test() ->
+	%start([],[]).
 
-rts_stop_test_() ->
-	{setup, fun() -> rts:start(normal,[]) end,
-      	        fun(_) -> ok end,
-      	        fun(_) -> [fun() -> rts:stop([]) end] end}.
+%rts_stop_test_() ->
+	%{setup, fun() -> {ok, Pid} = rts:start(normal,[]) end,
+                      %fun(_) -> ok end,
+                      %fun(_) -> [fun() -> rts:stop([]) end] end}.
 -endif.

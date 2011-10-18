@@ -102,11 +102,11 @@ stop() ->
 
 
 -ifdef(EUNIT).
-rt_sup_start_test() ->
-	start_link().
+%rts_sup_start_test() ->
+	%start_link().
 
-rts_stop_test_() ->
-	{setup, fun() -> start_link() end,
-	        fun(_) -> ok end,
-	        fun(_) -> [fun() -> stop() end] end}.
+%rts_stop_test_() ->
+	%{setup, fun() -> start_link() end,
+		%fun(_) -> ok end,
+		%fun(_) -> [fun() -> stop() end] end}.
 -endif.
