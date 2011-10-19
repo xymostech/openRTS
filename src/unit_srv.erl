@@ -1,5 +1,7 @@
 -module(unit_srv).
 
+-compile(export_all).
+
 -behavior(gen_server).
 
 -include("include/unit.hrl").
@@ -89,6 +91,7 @@ add_owned_command(#command{unit_id=ID} = Command, Units, Commands, Owner) ->
 			Commands
 	end.
 
+%TODO: move 0 speed check into validation
 validate(#command{id=move, unit_id=Id} = Command, Units) ->
 	case lists:keyfind(Id, #unit.id, Units) of
 		false ->
@@ -102,7 +105,8 @@ validate(#command{id=spawn, unit_id=Id, command=SpawnCmd} = Command, Units) ->
 		false ->
 			{bad, Command};
 		#unit{type_id=Type} ->
-			io:format("~p: Got unit.~n", [self()]),
+			io:format("~p: Got unit (~p).~n", [self(), Type]),
+			io:format("~p: Got unit data: ~p~n", [self(), info_srv:get_data(Type)]),
 			{data, #u_data{spawns=Spawns}} = info_srv:get_data(Type),
 			case lists:keyfind(SpawnCmd#spawn_command.spawn_type, #spawn.id, Spawns) of
 				false ->
@@ -214,4 +218,33 @@ get_new_id_test_() ->
 	                      #unit{id=1}]) == 4),
 	 ?_assert(get_new_id([#unit{id=1},
 	                      #unit{id=3}]) == 4)].
+
+add_owned_command_test_() ->
+	{setup,
+	 fun() -> {[#unit{id=1, owner=1}, #unit{id=2, owner=3}]} end,
+	 fun(_) -> ok end,
+	 fun({Units}) -> [
+		?_assertMatch([_], add_owned_command(#command{unit_id=1}, Units, [], 1)),
+		?_assertMatch([], add_owned_command(#command{unit_id=1}, Units, [], 3)),
+		?_assertMatch([], add_owned_command(#command{unit_id=2}, Units, [], 1)),
+		?_assertMatch([_], add_owned_command(#command{unit_id=2}, Units, [], 3))
+	] end}.
+
+validate_test_() ->
+	{spawn,
+		{setup,
+		 fun() -> info_srv:start_link(), {[#unit{id=1, type_id=1, owner=1}, #unit{id=2, type_id=2, owner=3}]} end,
+		 fun(_) -> ok end,
+		 fun({Units}) -> [
+			%move commands
+			?_assertMatch({ok,  #command{}}, validate(#command{id=move, unit_id=1}, Units)),
+			?_assertMatch({bad, #command{}}, validate(#command{id=move, unit_id=3}, Units)),
+			%spawn commands
+			?_assertMatch({ok,  #command{command=#spawn_command{turns=2}}},
+			              validate(#command{id=spawn, unit_id=2, command=#spawn_command{spawn_type=1}}, Units)),
+			?_assertMatch({bad, #command{}},
+			              validate(#command{id=spawn, unit_id=1, command=#spawn_command{spawn_type=2}}, Units)
+		] end}}.
+
+
 -endif.
