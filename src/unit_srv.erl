@@ -93,36 +93,39 @@ add_owned_command(#command{unit_id=ID} = Command, Units, Commands, Owner) ->
 
 %TODO: move 0 speed check into validation
 validate(#command{id=move, unit_id=Id} = Command, Units) ->
-	case lists:keyfind(Id, #unit.id, Units) of
-		false ->
-			{bad, Command};
-		_ ->
-			{ok, Command}
+	try
+		#unit{type_id=Type} = lists:keyfind(Id, #unit.id, Units),
+		{data, #u_data{speed=Speed}} = info_srv:get_data(Type),
+		case Speed of
+			0 ->
+				{bad, Command};
+			_ ->
+				{ok, Command}
+		end
+	catch
+		error:{badmatch, _} ->
+			{bad, Command}
 	end;
 validate(#command{id=spawn, unit_id=Id, command=SpawnCmd} = Command, Units) ->
-	io:format("~p: Validating spawn command.~n", [self()]),
-	case lists:keyfind(Id, #unit.id, Units) of
-		false ->
-			{bad, Command};
-		#unit{type_id=Type} ->
-			io:format("~p: Got unit (~p).~n", [self(), Type]),
-			io:format("~p: Got unit data: ~p~n", [self(), info_srv:get_data(Type)]),
-			{data, #u_data{spawns=Spawns}} = info_srv:get_data(Type),
-			case lists:keyfind(SpawnCmd#spawn_command.spawn_type, #spawn.id, Spawns) of
-				false ->
-					{bad, Command};
-				#spawn{turns=Turns} ->
-					io:format("~p: Can spawn in ~p Turns~n", [self(), Turns]),
-					{ok, Command#command{command=SpawnCmd#spawn_command{turns = Turns}}}
-			end
+	try
+		io:format("~p: Validating spawn command.~n", [self()]),
+		#unit{type_id=Type} = lists:keyfind(Id, #unit.id, Units),
+		{data, #u_data{spawns=Spawns}} = info_srv:get_data(Type),
+		#spawn{turns=Turns} = lists:keyfind(SpawnCmd#spawn_command.spawn_type, #spawn.id, Spawns),
+		io:format("~p: Can spawn in ~p Turns~n", [self(), Turns]),
+		{ok, Command#command{command=SpawnCmd#spawn_command{turns = Turns}}}
+	catch
+		error:{badmatch, _} ->
+			{bad, Command}
 	end;
 validate(#command{id=attack, unit_id=Id, command=AttackCmd} = Command, Units) ->
-	case lists:keyfind(Id, #unit.id, Units) of
-		false ->
-			{bad, Command};
-		#unit{type_id = Type} ->
-			#u_data{attack=#attack{turns=Turns}} = data_srv:get_unit(Type),
-			{ok, Command#command{command=AttackCmd#attack_command{turns=Turns}}}
+	try 
+		#unit{type_id = Type} = lists:keyfind(Id, #unit.id, Units),
+		{data, #u_data{attack=#attack{turns=Turns}}} = info_srv:get_data(Type),
+		{ok, Command#command{command=AttackCmd#attack_command{turns=Turns}}}
+	catch
+		error:{badmatch, _} ->
+			{bad, Command}
 	end.
 
 handle_info(_Info, State) ->
@@ -238,13 +241,23 @@ validate_test_() ->
 		 fun({Units}) -> [
 			%move commands
 			?_assertMatch({ok,  #command{}}, validate(#command{id=move, unit_id=1}, Units)),
+			?_assertMatch({bad, #command{}}, validate(#command{id=move, unit_id=2}, Units)),
 			?_assertMatch({bad, #command{}}, validate(#command{id=move, unit_id=3}, Units)),
 			%spawn commands
 			?_assertMatch({ok,  #command{command=#spawn_command{turns=2}}},
 			              validate(#command{id=spawn, unit_id=2, command=#spawn_command{spawn_type=1}}, Units)),
 			?_assertMatch({bad, #command{}},
-			              validate(#command{id=spawn, unit_id=1, command=#spawn_command{spawn_type=2}}, Units))
+			              validate(#command{id=spawn, unit_id=1, command=#spawn_command{spawn_type=2}}, Units)),
+			?_assertMatch({bad, #command{}},
+			              validate(#command{id=spawn, unit_id=2, command=#spawn_command{spawn_type=2}}, Units)),
+			?_assertMatch({bad, #command{}},
+			              validate(#command{id=spawn, unit_id=3, command=#spawn_command{spawn_type=2}}, Units)),
+			%attack commands
+			?_assertMatch({ok,  #command{command=#attack_command{turns=1}}},
+			              validate(#command{id=attack, unit_id=1, command=#attack_command{att_id=2}}, Units)),
+			?_assertMatch({bad, #command{}},
+			              validate(#command{id=attack, unit_id=2, command=#attack_command{att_id=1}}, Units)),
+			?_assertMatch({bad, #command{}},
+			              validate(#command{id=attack, unit_id=3, command=#attack_command{att_id=1}}, Units))
 		] end}}.
-
-
 -endif.

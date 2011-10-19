@@ -1,12 +1,12 @@
 % {u_data, id, speed, 
 %      [{spawn, type, turns}, ...],
-%      {attack, range, damage, turns}
+%      {attack, range, damage, turns} | no_attack
 % }
 [
 {u_data, 1, 2,
 	[],
-	{attack, 1, 2, 0}},
+	{attack, 1, 2, 1}},
 {u_data, 2, 0,
 	[{spawn, 1, 2}],
-	{attack, 0, 0, 0}}
+	no_attack}
 ].
