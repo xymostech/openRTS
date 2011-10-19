@@ -6,19 +6,22 @@
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
--export([start_link/0, get_data/1]).
+-export([start_link/0, start_link/1, get_data/1]).
 
 -record(state, {data = []}).
 
 start_link() ->
-	gen_server:start_link({local, ?MODULE}, ?MODULE, ?MODULE, []).
+	start_link("rule").
+
+start_link(Ruleset) ->
+	gen_server:start_link({local, ?MODULE}, ?MODULE, {?MODULE, Ruleset}, []).
 
 get_data(Id) ->
 	gen_server:call(?MODULE, {get_data, Id}).
 
-init(?MODULE) ->
-	{ok, #state{data = [#u_data{id=1, speed = 2},
-              		    #u_data{id=2, spawns=[#spawn{id=1, turns=2}]}]}}.
+init({?MODULE, Ruleset}) ->
+	{ok, Data} = file:script("priv/" ++ Ruleset ++ ".rul"),
+	{ok, #state{data = Data}}.
 
 handle_call({get_data, UnitId}, _From, #state{data = Data} = State) ->
 	case lists:keyfind(UnitId, #u_data.id, Data) of

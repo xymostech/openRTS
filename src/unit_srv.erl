@@ -233,7 +233,7 @@ add_owned_command_test_() ->
 validate_test_() ->
 	{spawn,
 		{setup,
-		 fun() -> info_srv:start_link(), {[#unit{id=1, type_id=1, owner=1}, #unit{id=2, type_id=2, owner=3}]} end,
+		 fun() -> info_srv:start_link("unit_srv_test"), {[#unit{id=1, type_id=1, owner=1}, #unit{id=2, type_id=2, owner=3}]} end,
 		 fun(_) -> ok end,
 		 fun({Units}) -> [
 			%move commands
@@ -243,7 +243,7 @@ validate_test_() ->
 			?_assertMatch({ok,  #command{command=#spawn_command{turns=2}}},
 			              validate(#command{id=spawn, unit_id=2, command=#spawn_command{spawn_type=1}}, Units)),
 			?_assertMatch({bad, #command{}},
-			              validate(#command{id=spawn, unit_id=1, command=#spawn_command{spawn_type=2}}, Units)
+			              validate(#command{id=spawn, unit_id=1, command=#spawn_command{spawn_type=2}}, Units))
 		] end}}.
 
 
