@@ -57,4 +57,4 @@ get_new_id(Players) ->
 get_new_id([], Max) ->
 	Max;
 get_new_id([#player{id=Id}|Players], Max) ->
-	get_new_id(Players, if Id > Max -> Id + 1; true -> Max end).
+	get_new_id(Players, if Id >= Max -> Id + 1; true -> Max end).
