@@ -108,11 +108,9 @@ validate(#command{id=move, unit_id=Id} = Command, Units) ->
 	end;
 validate(#command{id=spawn, unit_id=Id, command=SpawnCmd} = Command, Units) ->
 	try
-		io:format("~p: Validating spawn command.~n", [self()]),
 		#unit{type_id=Type} = lists:keyfind(Id, #unit.id, Units),
 		{data, #u_data{spawns=Spawns}} = info_srv:get_data(Type),
 		#spawn{turns=Turns} = lists:keyfind(SpawnCmd#spawn_command.spawn_type, #spawn.id, Spawns),
-		io:format("~p: Can spawn in ~p Turns~n", [self(), Turns]),
 		{ok, Command#command{command=SpawnCmd#spawn_command{turns = Turns}}}
 	catch
 		error:{badmatch, _} ->
@@ -198,8 +196,8 @@ attack_update(Units, #command{unit_id=Id, command=#attack_command{att_id=AttackI
 	try
 		#unit{type_id=UnitType, pos=UnitPos} = lists:keyfind(Id, #unit.id, Units),
 		AttackUnit = #unit{type_id=AttType, pos=AttackUnitPos, health=Health} = lists:keyfind(AttackId, #unit.id, Units),
-		#u_data{attack=#attack{range=Range, damage=Damage}} = info_srv:get_info(UnitType),
-		#u_data{health=MaxHealth} = info_srv:get_info(AttType),
+		{data, #u_data{attack=#attack{range=Range, damage=Damage}}} = info_srv:get_data(UnitType),
+		{data, #u_data{health=MaxHealth}} = info_srv:get_data(AttType),
 		true = pos:length(pos:add(pos:mult(UnitPos, -1), AttackUnitPos)) < Range,
 		Filtered = lists:keydelete(AttackId, #unit.id, Units),
 		if
@@ -207,7 +205,7 @@ attack_update(Units, #command{unit_id=Id, command=#attack_command{att_id=AttackI
 				{Filtered, CommandAcc, [{removed, AttackUnit}|Changed]};
 			true ->
 				NewAttackUnit = AttackUnit#unit{health=Health+Damage},
-				{[NewAttackUnit|Filtered], CommandAcc, [NewAttackUnit|Changed]}
+				{[NewAttackUnit|Filtered], CommandAcc, [{changed, NewAttackUnit}|Changed]}
 		end
 	catch
 		error:{badmatch, _} ->
