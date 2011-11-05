@@ -8,5 +8,5 @@
 	{attack, 1, 2, 0}},
 {u_data, 2, 0, 5,
 	[{spawn, 1, 2}],
-	no_attack
+	no_attack}
 ].
