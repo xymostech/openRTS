@@ -3,6 +3,6 @@
 
 -record(attack, {range, damage, turns}).
 -record(spawn, {id, turns}).
--record(u_data, {id, speed=0, spawns=[], attack=#attack{}}).
+-record(u_data, {id, speed, health, spawns=[], attack=#attack{}}).
 
 -endif.

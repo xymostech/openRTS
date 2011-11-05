@@ -197,12 +197,18 @@ spawn_update(Units, #command{command=#spawn_command{turns=Turns}=SpawnCmd}=Comma
 attack_update(Units, #command{unit_id=Id, command=#attack_command{att_id=AttackId, turns=0}}, CommandAcc, Changed) ->
 	try
 		#unit{type_id=UnitType, pos=UnitPos} = lists:keyfind(Id, #unit.id, Units),
-		AttackUnit = #unit{pos=AttackUnitPos, health=Health} = lists:keyfind(AttackId, #unit.id, Units),
+		AttackUnit = #unit{type_id=AttType, pos=AttackUnitPos, health=Health} = lists:keyfind(AttackId, #unit.id, Units),
 		#u_data{attack=#attack{range=Range, damage=Damage}} = info_srv:get_info(UnitType),
+		#u_data{health=MaxHealth} = info_srv:get_info(AttType),
 		true = pos:length(pos:add(pos:mult(UnitPos, -1), AttackUnitPos)) < Range,
 		Filtered = lists:keydelete(AttackId, #unit.id, Units),
-		NewAttackUnit = AttackUnit#unit{health=Health+Damage},
-		{[NewAttackUnit|Filtered], CommandAcc, [{changed, NewAttackUnit}|Changed]}
+		if
+			Health+Damage >= MaxHealth ->
+				{Filtered, CommandAcc, [{removed, AttackUnit}|Changed]};
+			true ->
+				NewAttackUnit = AttackUnit#unit{health=Health+Damage},
+				{[NewAttackUnit|Filtered], CommandAcc, [NewAttackUnit|Changed]}
+		end
 	catch
 		error:{badmatch, _} ->
 			{Units, Changed, CommandAcc}
