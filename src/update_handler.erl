@@ -18,6 +18,8 @@ update() ->
 send_units(Units, Socket) ->
 	lists:map(fun(Unit) -> gen_tcp:send(Socket, format_unit(Unit)) end, Units).
 
+format_unit(#unit{id=Id, type_id=Type, pos=#pos{x=X, y=Y}, owner=Owner, health=Health}) ->
+	io_lib:format("Added:   ~p's unit ~p (~p) at (~p, ~p) with ~p dmg~n", [Owner, Type, Id, X, Y, Health]);
 format_unit({changed, #unit{id=Id, type_id=Type, pos=#pos{x=X, y=Y}, owner=Owner, health=Health}}) ->
 	io_lib:format("Changed: ~p's unit ~p (~p) at (~p, ~p) with ~p dmg~n", [Owner, Type, Id, X, Y, Health]);
 format_unit({added,   #unit{id=Id, type_id=Type, pos=#pos{x=X, y=Y}, owner=Owner, health=Health}}) ->
