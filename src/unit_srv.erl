@@ -167,7 +167,7 @@ move_update(Units, #command{unit_id=UnitId, command=#move_command{pos=EndPos}} =
 				next ->
 					[Command|CommandAcc]
 			end,
-			{[NewUnit|FilteredUnits], NewCommandAcc, [NewUnit|Changed]}
+			{[NewUnit|FilteredUnits], NewCommandAcc, [{changed, NewUnit}|Changed]}
 	end.
 
 find_new_pos(#unit{pos=Pos, type_id=Type}, FinalPos) ->
@@ -189,7 +189,7 @@ spawn_update(Units, #command{unit_id=Id, command=#spawn_command{spawn_type=Type,
 			{Units, Changed, CommandAcc};
 		Unit ->
 			NewUnit = #unit{id=get_new_id(Units), type_id=Type, pos=Unit#unit.pos, owner=Unit#unit.owner},
-			{[NewUnit|Units], CommandAcc, [NewUnit|Changed]}
+			{[NewUnit|Units], CommandAcc, [{added, NewUnit}|Changed]}
 	end;
 spawn_update(Units, #command{command=#spawn_command{turns=Turns}=SpawnCmd}=Command, CommandAcc, Changed) ->
 	{Units, [Command#command{command = SpawnCmd#spawn_command{turns = Turns-1}}|CommandAcc], Changed}.
@@ -202,7 +202,7 @@ attack_update(Units, #command{unit_id=Id, command=#attack_command{att_id=AttackI
 		true = pos:length(pos:add(pos:mult(UnitPos, -1), AttackUnitPos)) < Range,
 		Filtered = lists:keydelete(AttackId, #unit.id, Units),
 		NewAttackUnit = AttackUnit#unit{health=Health+Damage},
-		{[NewAttackUnit|Filtered], CommandAcc, [NewAttackUnit|Changed]}
+		{[NewAttackUnit|Filtered], CommandAcc, [{changed, NewAttackUnit}|Changed]}
 	catch
 		error:{badmatch, _} ->
 			{Units, Changed, CommandAcc}
@@ -269,13 +269,13 @@ update_test_() ->
 		 fun(_) -> [
 					 ?_assertMatch({[#unit{id=1, type_id=1, pos=#pos{x=3.0, y=0.0}}],
 							[#command{id=move, unit_id=1, command=#move_command{pos=#pos{x=5, y=0}}}],
-							[#unit{id=1, type_id=1, pos=#pos{x=3.0, y=0.0}}]},
+							[{changed, #unit{id=1, type_id=1, pos=#pos{x=3.0, y=0.0}}}]},
 						move_update([#unit{id=1, type_id=1, pos=#pos{x=1, y=0}}],
 							    #command{id=move, unit_id=1, command=#move_command{pos=#pos{x=5, y=0}}},
 							    [], [])),
 					 ?_assertMatch({[#unit{id=1, type_id=1, pos=#pos{x=5, y=0}}],
 							[],
-							[#unit{id=1, type_id=1, pos=#pos{x=5, y=0}}]},
+							[{changed, #unit{id=1, type_id=1, pos=#pos{x=5, y=0}}}]},
 						move_update([#unit{id=1, type_id=1, pos=#pos{x=3, y=0}}],
 							    #command{id=move, unit_id=1, command=#move_command{pos=#pos{x=5, y=0}}},
 							    [], []))

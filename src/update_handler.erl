@@ -16,5 +16,11 @@ update() ->
 	lists:map(fun(#player{socket = Socket}) -> gen_tcp:send(Socket, "\nChanges:\n"), send_units(Changed, Socket) end, Players).
 
 send_units(Units, Socket) ->
-	lists:map(fun(#unit{id=Id, pos=Pos}) -> gen_tcp:send(Socket, io_lib:format("Unit (~p) at (~p,~p)~n", [Id, Pos#pos.x, Pos#pos.y])) end,
-      	          Units).
+	lists:map(fun(Unit) -> gen_tcp:send(Socket, format_unit(Unit)) end, Units).
+
+format_unit({changed, #unit{id=Id, type_id=Type, pos=#pos{x=X, y=Y}, owner=Owner, health=Health}}) ->
+	io_lib:format("Changed: ~p's unit ~p (~p) at (~p, ~p) with ~p dmg~n", [Owner, Type, Id, X, Y, Health]);
+format_unit({added,   #unit{id=Id, type_id=Type, pos=#pos{x=X, y=Y}, owner=Owner, health=Health}}) ->
+	io_lib:format("Added:   ~p's unit ~p (~p) at (~p, ~p) with ~p dmg~n", [Owner, Type, Id, X, Y, Health]);
+format_unit({removed, #unit{id=Id}}) ->
+	io_lib:format("Removed: ~p~n", [Id]).
