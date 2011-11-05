@@ -24,7 +24,7 @@ start_link() ->
 	gen_server:start_link({local, ?MODULE}, ?MODULE, ?MODULE, []).
 
 add_unit(Type, Pos, Owner) ->
-	gen_sever:cast(?MODULE, {add_unit, #unit{type_id=Type, pos=Pos, owner=Owner}}).
+	gen_server:cast(?MODULE, {add_unit, #unit{type_id=Type, pos=Pos, owner=Owner}}).
 
 add_move_command(Unit, Pos, Owner) ->
 	add_command(#command{id=move, unit_id=Unit, command=#move_command{pos=Pos}}, Owner).
