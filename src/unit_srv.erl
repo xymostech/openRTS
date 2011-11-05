@@ -164,7 +164,7 @@ move_update(Units, #command{unit_id=UnitId, command=#move_command{pos=EndPos}} =
 			NewCommandAcc = case Done of
 				done ->
 					CommandAcc;
-				{next, NewPos} ->
+				next ->
 					[Command|CommandAcc]
 			end,
 			{[NewUnit|FilteredUnits], NewCommandAcc, [NewUnit|Changed]}
@@ -177,7 +177,7 @@ find_new_pos(#unit{pos=Pos, type_id=Type}, FinalPos) ->
 	if
 		Speed == 0 ->
 			{done, Pos};
-		MoveLen < Speed ->
+		MoveLen =< Speed ->
 			{done, FinalPos};
 		true ->
 			{next, pos:add(Pos, pos:mult(pos:unit(MoveVect), Speed))}
@@ -260,4 +260,27 @@ validate_test_() ->
 			?_assertMatch({bad, #command{}},
 			              validate(#command{id=attack, unit_id=3, command=#attack_command{att_id=1}}, Units))
 		] end}}.
+
+update_test_() ->
+	{spawn,
+		{setup, 
+		 fun()  -> info_srv:start_link("unit_srv_test"), {} end,
+		 fun(_) -> ok end,
+		 fun(_) -> [
+					 ?_assertMatch({[#unit{id=1, type_id=1, pos=#pos{x=3.0, y=0.0}}],
+							[#command{id=move, unit_id=1, command=#move_command{pos=#pos{x=5, y=0}}}],
+							[#unit{id=1, type_id=1, pos=#pos{x=3.0, y=0.0}}]},
+						move_update([#unit{id=1, type_id=1, pos=#pos{x=1, y=0}}],
+							    #command{id=move, unit_id=1, command=#move_command{pos=#pos{x=5, y=0}}},
+							    [], [])),
+					 ?_assertMatch({[#unit{id=1, type_id=1, pos=#pos{x=5, y=0}}],
+							[],
+							[#unit{id=1, type_id=1, pos=#pos{x=5, y=0}}]},
+						move_update([#unit{id=1, type_id=1, pos=#pos{x=3, y=0}}],
+							    #command{id=move, unit_id=1, command=#move_command{pos=#pos{x=5, y=0}}},
+							    [], []))
+			] end
+		}
+	}.
+
 -endif.
