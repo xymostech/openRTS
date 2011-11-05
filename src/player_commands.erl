@@ -31,6 +31,8 @@ handle_command(Command, Id) ->
 			add_move(Rest, Id);
 		2 ->
 			add_spawn(Rest, Id);
+		3 ->
+			add_attack(Rest, Id);
 		_ ->
 			ok
 	end.
@@ -42,6 +44,10 @@ add_move(Args, Id) ->
 add_spawn(Args, Id) ->
 	[UnitId, NewUnitId|_] = Args,
 	unit_srv:add_spawn_command(UnitId, NewUnitId, Id).
+
+add_attack(Args, Id) ->
+	[UnitId, AttUnitId|_] = Args,
+	unit_srv:add_attack_command(UnitId, AttUnitId, Id).
 
 -ifdef(EUNIT).
 split_test_() ->
