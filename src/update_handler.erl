@@ -5,8 +5,9 @@
 -include("include/player.hrl").
 -include("include/unit.hrl").
 
-connect(#player{socket = Socket} = _Player) ->
+connect(#player{socket = Socket, id=Id} = _Player) ->
 	{units, Units} = unit_srv:get_units(),
+	gen_tcp:send(Socket, io_lib:format("You are player ~p~n", [Id])),
 	gen_tcp:send(Socket, "Units:\n"),
 	send_units(Units, Socket).
 
