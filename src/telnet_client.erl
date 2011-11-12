@@ -15,9 +15,7 @@ init_tcp(_Socket) ->
 handle_tcp_data(Data, Socket, _) ->
 	case strip(Data) of
 		"start" ->
-			step_srv:start();
-		"stop" ->
-			step_srv:stop();
+			game_srv:start();
 		"reload" ->
 			reloader:start_reload();
 		_ ->

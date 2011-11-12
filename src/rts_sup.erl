@@ -74,6 +74,14 @@ init(?MODULE) ->
 					worker,
 					[step_srv]
 				},
+				{
+					game_srv,
+					{game_srv, start_link, []},
+					temporary,
+					2000,
+					worker,
+					[game_srv]
+				},
 				% reloader worker
 				{
 					reloader,

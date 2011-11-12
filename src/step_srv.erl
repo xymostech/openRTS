@@ -36,7 +36,7 @@ handle_cast({stop}, #state{timer_ref = Ref} = State) ->
 	{noreply, State};
 handle_cast({do_update}, State) ->
 	update_handler:update(),
-	io:format("~p: Did update.~n", [self()]),
+	game_srv:check(),
 	{ok, NewRef} = timer:apply_after(5000, ?MODULE, do_update, []),
 	{noreply, State#state{timer_ref = NewRef}};
 handle_cast(_Request, State) ->
